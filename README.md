@@ -6,31 +6,32 @@
 - Target deployment: large-scale areas like school campuses, stadiums, and public spaces.
 
 ## What It Does
-- Camera identifies the item as landfill, recycle, or compost.
-- Sends the data via Arduino.
-- OLED display guides the user: Prompts “hold item closer”, indicates “item pending”, and displays the correct category for disposal.
-- Appropriate trash bin opens automatically for the item.
-- System resets for the next item.
+- The web camera identifies the item as landfill, recycling, or compost.
+- Data collected by the camera is processed through a calculated average and then sent via Arduino.
+- OLED display guides the user: Prompts “hold item closer”, indicates “hold item still”, and displays the correct category for disposal.
+- After the data is processed, the appropriate trash bin opens automatically for the item, and the system resets for the next item.
 
 ## How We Built It
 - Software: Python + PyTorch for object recognition.
-- Hardware: Arduino (ESP32-CAM), servo motors, OLED display.
+- Hardware: Arduino, servo motors, OLED display.
 - Structure: Wood for the bin model.
 
 ## Challenges
 - Ensuring smooth communication between software and hardware components.
-- Implementing object identification from webcam to ESP32.
-- Determining dataset size for accurate object detection without interference from background environments.
+- Implementing object identification from a laptop webcam.
+- Determining the dataset size for accurate object detection without interference from background environments.
+- Determining whether to accommodate identification for multiple items, though we decided to shift focus to identifying one item at a time.
 
 ## Accomplishments
-- Ran PyTorch for image identification, achieving ~60% accuracy.
-- Managed background/environment to prevent interference with object recognition.
-- Built a small-scale model simulating bin opening triggered by the identified item category.
+Ran PyTorch for image identification.
+Managed background/environment to prevent some interference with object recognition.
+Built a small-scale model simulating bin opening triggered by the identified item category.
 
 ## What We Learned
-- Using Python and PyTorch for real-time object recognition.
+- Using Python and PyTorch for real-time object recognition through image transformation.
 - Connecting Python code with ESP32-CAM and sending data to Arduino for hardware control.
-- Integrating software and hardware for functional prototypes.
+- Integrating software and hardware for functional prototypes. (laptop <-> webcamera, webcamera + code<->arduino, arduino<->bins)
+- Creating our model with digital servos has higher torque for bin flap movement, and refining our design to be simple and take up less space & resources.
 
 ## What's Next For EcoSort
 - Train for more objects or adopt methods supporting larger datasets.
