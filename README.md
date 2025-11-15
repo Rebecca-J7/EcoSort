@@ -1,5 +1,3 @@
-#EcoSort
-
 ## Idea & Purpose
 - People often toss trash into the most convenient bins, even when labeled for landfill, recycling, or compost.
 - Labels on bins (images/text) may peel, fade, or be ignored, and people may not quickly identify which items go where.
