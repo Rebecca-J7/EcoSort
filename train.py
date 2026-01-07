@@ -1,57 +1,80 @@
-import torch
-import torch.nn as nn
-from torch.utils.data import DataLoader
-from torchvision import transforms, models, datasets
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras import layers, models
 
-# --- Settings ---
-data_dir = "dataset"
-num_epochs = 10
-batch_size = 16
-learning_rate = 0.001
+# ---------------------------
+# Settings
+# ---------------------------
+DATA_DIR = "dataset"  # Folder with subfolders for each class
+IMG_SIZE = (224, 224)
+BATCH_SIZE = 16
+EPOCHS = 10
+MODEL_FILE = "keras_model.h5"
 
-# --- Data Transformations ---
-transform = transforms.Compose([
-    transforms.Resize((224,224)),
-    transforms.ToTensor(),
-    transforms.Normalize(mean=[0.485,0.456,0.406], std=[0.229,0.224,0.225])
+# ---------------------------
+# Data Preprocessing
+# ---------------------------
+datagen = ImageDataGenerator(
+    rescale=1./255,
+    rotation_range=30,
+    width_shift_range=0.2,
+    height_shift_range=0.2,
+    zoom_range=0.2,
+    horizontal_flip=True,
+    validation_split=0.2  # 20% for validation
+)
+
+train_gen = datagen.flow_from_directory(
+    DATA_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    subset="training",
+    class_mode="categorical"
+)
+
+val_gen = datagen.flow_from_directory(
+    DATA_DIR,
+    target_size=IMG_SIZE,
+    batch_size=BATCH_SIZE,
+    subset="validation",
+    class_mode="categorical"
+)
+
+# ---------------------------
+# Model
+# ---------------------------
+base_model = tf.keras.applications.MobileNetV2(
+    input_shape=(IMG_SIZE[0], IMG_SIZE[1], 3),
+    include_top=False,
+    weights="imagenet"
+)
+base_model.trainable = False  # Freeze base
+
+model = models.Sequential([
+    base_model,
+    layers.GlobalAveragePooling2D(),
+    layers.Dense(len(train_gen.class_indices), activation="softmax")
 ])
 
-# --- Load dataset ---
-dataset = datasets.ImageFolder(data_dir, transform=transform)
-dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+model.compile(
+    optimizer='adam',
+    loss='categorical_crossentropy',
+    metrics=['accuracy']
+)
 
-print("Detected classes (alphabetical):", dataset.classes)
+model.summary()
 
-# --- Model ---
-model = models.resnet18(weights=models.ResNet18_Weights.DEFAULT)
-model.fc = nn.Linear(model.fc.in_features, len(dataset.classes))
+# ---------------------------
+# Training
+# ---------------------------
+history = model.fit(
+    train_gen,
+    validation_data=val_gen,
+    epochs=EPOCHS
+)
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-model.to(device)
-
-# --- Loss & Optimizer ---
-criterion = nn.CrossEntropyLoss()
-optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-
-print("Training started...")
-
-# --- Training loop ---
-for epoch in range(num_epochs):
-    running_loss = 0.0
-    for images, labels in dataloader:
-        images, labels = images.to(device), labels.to(device)
-
-        optimizer.zero_grad()
-        outputs = model(images)
-        loss = criterion(outputs, labels)
-        loss.backward()
-        optimizer.step()
-
-        running_loss += loss.item()
-
-    print(f"Epoch {epoch+1}/{num_epochs}, Loss: {running_loss:.4f}")
-
-# --- Save model ---
-torch.save(model.state_dict(), "waste_model.pth")
-print("Training complete! Saved as waste_model.pth")
-print("FINAL class order:", dataset.classes)
+# ---------------------------
+# Save Model
+# ---------------------------
+model.save(MODEL_FILE)
+print(f"Model saved as {MODEL_FILE}")
